@@ -6,6 +6,7 @@ pipeline {
   }
 
   stages {
+
     stage("copy files to ansible server") {
       steps {
         script {
@@ -14,9 +15,10 @@ pipeline {
           sshagent(['ansible-server-key']) {
             sh """
               scp -o StrictHostKeyChecking=no \
-               ansible/* \
-              ec2-user@${ANSIBLE_SERVER}:~/
+                ansible/* \
+                ec2-user@${ANSIBLE_SERVER}:~/
             """
+
             withCredentials([
               sshUserPrivateKey(
                 credentialsId: 'ec2-servers-key',
@@ -44,30 +46,32 @@ pipeline {
         }
       }
     }
-  }
 
-  stage("execute ansible playbook") {
-  steps {
-    script {
-      echo "calling ansible playbook to configure ec2 instances"
+    stage("execute ansible playbook") {
+      steps {
+        script {
+          echo "calling ansible playbook to configure ec2 instances"
 
-      def remote = [:]
-      remote.name = "ansible-server"
-      remote.host = ANSIBLE_SERVER
-      remote.allowAnyHosts = true
+          def remote = [:]
+          remote.name = "ansible-server"
+          remote.host = ANSIBLE_SERVER
+          remote.allowAnyHosts = true
 
-      withCredentials([
-        sshUserPrivateKey(
-          credentialsId: 'ansible-server-key',
-          keyFileVariable: 'ANSIBLE_KEY',
-          usernameVariable: 'ANSIBLE_USER'
-        )
-      ]) {
-        remote.user = ANSIBLE_USER
-        remote.identityFile = ANSIBLE_KEY
+          withCredentials([
+            sshUserPrivateKey(
+              credentialsId: 'ansible-server-key',
+              keyFileVariable: 'ANSIBLE_KEY',
+              usernameVariable: 'ANSIBLE_USER'
+            )
+          ]) {
+            remote.user = ANSIBLE_USER
+            remote.identityFile = ANSIBLE_KEY
 
-        sshCommand remote: remote, command: "ls -la"
+            sshCommand remote: remote, command: "ls -la"
+          }
+        }
       }
     }
+
   }
 }
