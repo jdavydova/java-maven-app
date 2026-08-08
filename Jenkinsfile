@@ -17,6 +17,29 @@ pipeline {
                ansible/* \
               ec2-user@${ANSIBLE_SERVER}:~/
             """
+            withCredentials([
+              sshUserPrivateKey(
+                credentialsId: 'ec2-servers-key',
+                keyFileVariable: 'EC2_KEY',
+                usernameVariable: 'EC2_USER'
+              )
+            ]) {
+              sshagent(['ansible-server-key']) {
+                sh """
+                  ssh -o StrictHostKeyChecking=no \
+                    ec2-user@${ANSIBLE_SERVER} \
+                    'mkdir -p ~/.ssh && chmod 700 ~/.ssh'
+
+                  scp -o StrictHostKeyChecking=no \
+                    "\$EC2_KEY" \
+                    ec2-user@${ANSIBLE_SERVER}:~/.ssh/ansible-jenkins.pem
+
+                  ssh -o StrictHostKeyChecking=no \
+                    ec2-user@${ANSIBLE_SERVER} \
+                    'chmod 600 ~/.ssh/ansible-jenkins.pem'
+                """
+              }
+            }
           }
         }
       }
