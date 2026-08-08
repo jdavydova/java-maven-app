@@ -13,7 +13,9 @@ pipeline {
 
           sshagent(['ansible-server-key']) {
             sh """
-             ssh -o StrictHostKeyChecking=no ec2-user@${ANSIBLE_SERVER} 'whoami && hostname'
+              scp -o StrictHostKeyChecking=no \
+               ansible/* \
+              ec2-user@${ANSIBLE_SERVER}:~/
             """
           }
         }
